@@ -1,0 +1,2484 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mari Belajar Bahasa Jawi</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&family=Noto+Sans+Arabic:wght@400;700&display=swap');
+        
+        :root {
+            --primary-color: #4e2a84;
+            --secondary-color: #f9a826;
+            --accent-color: #1abc9c;
+            --light-color: #f8f9fa;
+            --dark-color: #343a40;
+            --jawi-font: 'Scheherazade New', 'Amiri', serif;
+            --body-font: 'Noto Sans Arabic', sans-serif;
+        }
+        
+        body {
+            font-family: var(--body-font);
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-size: 14px;
+        }
+        
+        .book-container {
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            perspective: 1000px;
+        }
+        
+        .book {
+            width: 90vw;
+            height: 90vh;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+        }
+        
+        .page {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            box-sizing: border-box;
+            backface-visibility: hidden;
+            overflow: hidden;
+            display: none;
+        }
+        
+        .page.active {
+            display: block;
+        }
+        
+        .page-content {
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .page-header {
+            text-align: center;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 8px;
+        }
+        
+        .page-header h2 {
+            font-size: 1.5rem;
+            margin: 0;
+        }
+        
+        .navigation {
+            position: absolute;
+            bottom: 15px;
+            width: calc(100% - 30px);
+            display: flex;
+            justify-content: space-between;
+            padding: 0;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+        
+        .nav-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.8rem;
+        }
+        
+        .nav-btn:hover {
+            background-color: var(--secondary-color);
+            transform: scale(1.1);
+        }
+        
+        .page-number {
+            position: absolute;
+            bottom: 5px;
+            right: 15px;
+            font-size: 12px;
+            color: var(--dark-color);
+        }
+        
+        /* Cover Page Styles */
+        .cover {
+            background: linear-gradient(135deg, var(--primary-color), #8e44ad);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            height: 100%;
+        }
+        
+        .cover h1 {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .cover-image {
+            width: 150px;
+            height: 150px;
+            background-color: white;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+        
+        .cover-image i {
+            font-size: 80px;
+            color: var(--primary-color);
+        }
+        
+        /* Table of Contents Styles */
+        .toc {
+            padding: 20px;
+            height: calc(100% - 40px);
+            overflow: hidden;
+        }
+        
+        .toc-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            height: calc(100% - 60px);
+            overflow: hidden;
+        }
+        
+        .toc-item {
+            padding: 8px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            background-color: #f8f9fa;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .toc-item:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-3px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .toc-item:hover i,
+        .toc-item:hover span {
+            color: white;
+        }
+        
+        .toc-item i {
+            margin-right: 8px;
+            color: var(--secondary-color);
+            font-size: 0.9rem;
+        }
+        
+        .toc-item span {
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+        }
+        
+        /* Jawi Letters Grid Styles */
+        .jawi-grid-container {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 6px;
+            direction: rtl;
+            margin-top: 10px;
+            height: calc(100% - 200px);
+            overflow: hidden;
+        }
+        
+        .jawi-letter {
+            border-radius: 6px;
+            padding: 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .jawi-letter:nth-child(5n+1) {
+            background-color: #FFD6D6; /* Light red */
+        }
+        
+        .jawi-letter:nth-child(5n+2) {
+            background-color: #D6FFD6; /* Light green */
+        }
+        
+        .jawi-letter:nth-child(5n+3) {
+            background-color: #D6D6FF; /* Light blue */
+        }
+        
+        .jawi-letter:nth-child(5n+4) {
+            background-color: #FFFFD6; /* Light yellow */
+        }
+        
+        .jawi-letter:nth-child(5n+5) {
+            background-color: #FFD6FF; /* Light purple */
+        }
+        
+        .jawi-letter:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        .jawi-letter.active {
+            animation: glow 1.5s infinite alternate;
+        }
+        
+        .jawi-char {
+            font-family: var(--jawi-font);
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .letter-info {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 3px;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+            font-size: 0.7rem;
+        }
+        
+        .jawi-letter:hover .letter-info {
+            transform: translateY(0);
+        }
+        
+        .letter-display {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            background-color: white;
+            box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            height: 100px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .letter-display .jawi-char {
+            font-size: 3rem;
+            margin-bottom: 5px;
+        }
+        
+        .letter-display .rumi-char {
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+        
+        @keyframes glow {
+            from {
+                box-shadow: 0 0 5px #f6d365;
+            }
+            to {
+                box-shadow: 0 0 10px #fda085, 0 0 15px #f6d365;
+            }
+        }
+        
+        /* Connecting Letters Styles - IMPROVED DESIGN */
+        .connecting-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 10px;
+            height: calc(100% - 60px);
+            overflow: hidden;
+        }
+        
+        .connection-example {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            height: calc(20% - 8px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .connection-example:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+        }
+        
+        .connection-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed #e9ecef;
+        }
+        
+        .jawi-title {
+            font-family: var(--jawi-font);
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            text-align: right;
+            direction: rtl;
+        }
+        
+        .rumi-title {
+            font-size: 0.9rem;
+            color: var(--secondary-color);
+            font-weight: bold;
+        }
+        
+        .connection-animation {
+            flex-grow: 1;
+            position: relative;
+            direction: rtl;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .letter-stages {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            width: 100%;
+            position: relative;
+        }
+        
+        .letter-stage {
+            position: absolute;
+            display: flex;
+            align-items: center;
+            opacity: 0;
+            animation: fadeInStage 4s infinite;
+        }
+        
+        .letter-stage:nth-child(1) {
+            animation-delay: 0s;
+        }
+        
+        .letter-stage:nth-child(2) {
+            animation-delay: 1s;
+        }
+        
+        .letter-stage:nth-child(3) {
+            animation-delay: 2s;
+        }
+        
+        .letter-stage:nth-child(4) {
+            animation-delay: 3s;
+        }
+        
+        @keyframes fadeInStage {
+            0%, 20% { opacity: 1; }
+            25%, 100% { opacity: 0; }
+        }
+        
+        .stage-letter {
+            font-family: var(--jawi-font);
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin: 0 5px;
+            position: relative;
+        }
+        
+        .connection-arrow {
+            color: var(--secondary-color);
+            font-size: 1.2rem;
+            margin: 0 5px;
+        }
+        
+        .connection-info {
+            margin-top: 5px;
+            padding-top: 5px;
+            border-top: 1px dashed #e9ecef;
+            font-size: 0.75rem;
+            color: #6c757d;
+            text-align: center;
+        }
+        
+        /* Reading Practice Styles - UPDATED */
+        .reading-practice {
+            margin-top: 10px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            height: calc(100% - 60px);
+            overflow: hidden;
+        }
+        
+        .sentence-box {
+            background: linear-gradient(145deg, #ffffff, #f0f0f0);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            height: calc(33.33% - 7px);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .sentence-box:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        .jawi-sentence {
+            font-family: var(--jawi-font);
+            font-size: 1.4rem;
+            color: var(--primary-color);
+            text-align: right;
+            direction: rtl;
+            margin-bottom: 10px;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .rumi-translation {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            text-align: center;
+            transform: translateY(100%);
+            transition: transform 0.5s ease;
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            right: 10px;
+        }
+        
+        .sentence-box.active .rumi-translation {
+            transform: translateY(0);
+            animation: bounceIn 0.5s;
+        }
+        
+        @keyframes bounceIn {
+            0% { transform: translateY(100%); }
+            60% { transform: translateY(-10%); }
+            100% { transform: translateY(0); }
+        }
+        
+        .tap-hint {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: var(--secondary-color);
+            color: white;
+            font-size: 0.65rem;
+            padding: 2px 5px;
+            border-radius: 6px;
+            opacity: 0.8;
+        }
+        
+        /* Story Page Styles */
+        .story-container {
+            background-color: #f9f7f1;
+            border-radius: 12px;
+            padding: 10px;
+            margin-top: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            position: relative;
+            height: calc(100% - 100px);
+            overflow: hidden;
+        }
+        
+        .story-images {
+            display: flex;
+            justify-content: space-around;
+            margin: 10px 0;
+        }
+        
+        .story-image {
+            width: 60px;
+            height: 60px;
+            background-color: #fff;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+            animation: bounce 3s infinite alternate;
+        }
+        
+        .story-image:nth-child(2) {
+            animation-delay: 1.5s;
+        }
+        
+        .story-image i {
+            font-size: 30px;
+            color: var(--secondary-color);
+        }
+        
+        .story-title {
+            font-family: var(--jawi-font);
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        
+        .story-content {
+            font-family: var(--jawi-font);
+            font-size: 1.1rem;
+            color: var(--dark-color);
+            text-align: right;
+            line-height: 1.6;
+            direction: rtl;
+            height: calc(100% - 50px);
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+        
+        .story-content::-webkit-scrollbar {
+            width: 5px;
+        }
+        
+        .story-content::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        
+        .story-content::-webkit-scrollbar-thumb {
+            background: var(--secondary-color);
+            border-radius: 3px;
+        }
+        
+        .story-paragraph {
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px;
+            border-radius: 8px;
+        }
+        
+        .story-paragraph:hover {
+            background-color: rgba(249, 168, 38, 0.1);
+        }
+        
+        .story-translation {
+            font-size: 0.8rem;
+            color: var(--dark-color);
+            margin-top: 3px;
+            text-align: left;
+            display: none;
+        }
+        
+        .story-paragraph.active .story-translation {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        
+        /* Quiz Styles */
+        .quiz-container {
+            margin-top: 10px;
+            height: calc(100% - 100px);
+            overflow: hidden;
+        }
+        
+        .quiz-question {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: none;
+            height: 100%;
+        }
+        
+        .quiz-question.active {
+            display: flex;
+            flex-direction: column;
+            animation: fadeIn 0.5s;
+        }
+        
+        .question-text {
+            font-family: var(--jawi-font);
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 20px;
+            flex-grow: 0;
+        }
+        
+        .options-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            flex-grow: 1;
+        }
+        
+        .option {
+            background-color: #f0f8ff;
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            font-size: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        
+        .option:hover {
+            background-color: #e9ecef;
+            transform: translateY(-3px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        
+        .option.correct {
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+            animation: correctAnswer 1s;
+        }
+        
+        .option.incorrect {
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+            animation: incorrectAnswer 1s;
+        }
+        
+        .quiz-progress {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 0.8rem;
+        }
+        
+        .progress-bar {
+            flex-grow: 1;
+            height: 8px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            margin: 0 8px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--secondary-color), var(--accent-color));
+            width: 0;
+            transition: width 0.3s;
+            border-radius: 4px;
+        }
+        
+        .quiz-score {
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        @keyframes correctAnswer {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes incorrectAnswer {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+        
+        /* Writing Exercise Styles */
+        .writing-exercise {
+            margin-top: 10px;
+            height: calc(100% - 100px);
+            overflow: hidden;
+        }
+        
+        .writing-question {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            text-align: center;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .jawi-prompt {
+            font-family: var(--jawi-font);
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .writing-input {
+            width: 100%;
+            padding: 10px;
+            font-size: 1rem;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+        }
+        
+        .writing-input:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(249, 168, 38, 0.25);
+            outline: none;
+        }
+        
+        .check-answer-btn {
+            background: linear-gradient(90deg, var(--secondary-color), #ffb347);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(249, 168, 38, 0.3);
+        }
+        
+        .check-answer-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 15px rgba(249, 168, 38, 0.4);
+        }
+        
+        .feedback {
+            margin-top: 15px;
+            font-weight: bold;
+            display: none;
+            font-size: 1rem;
+            padding: 10px;
+            border-radius: 8px;
+        }
+        
+        .feedback.correct {
+            color: #28a745;
+            background-color: rgba(40, 167, 69, 0.1);
+        }
+        
+        .feedback.incorrect {
+            color: #dc3545;
+            background-color: rgba(220, 53, 69, 0.1);
+        }
+        
+        /* Game Styles */
+        .game-container {
+            margin-top: 10px;
+            background: linear-gradient(145deg, #f0f8ff, #e6f2ff);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            text-align: center;
+            height: calc(100% - 60px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 10px;
+            flex-grow: 1;
+        }
+        
+        .game-card {
+            background-color: var(--primary-color);
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.6s;
+            transform-style: preserve-3d;
+            position: relative;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .game-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        
+        .game-card.flipped {
+            transform: rotateY(180deg);
+        }
+        
+        .card-front, .card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+        }
+        
+        .card-front {
+            background: linear-gradient(135deg, var(--primary-color), #6a3cb5);
+            color: white;
+            font-size: 1.2rem;
+        }
+        
+        .card-back {
+            background-color: white;
+            transform: rotateY(180deg);
+            font-family: var(--jawi-font);
+            font-size: 1.5rem;
+            color: var(--primary-color);
+        }
+        
+        .game-stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+        }
+        
+        .game-stat {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 8px;
+            padding: 8px;
+            min-width: 70px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--dark-color);
+        }
+        
+        .stat-value {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        /* Daily Prayers Styles */
+        .prayers-container {
+            margin-top: 10px;
+            height: calc(100% - 60px);
+            overflow: hidden;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+        
+        .prayer {
+            background: linear-gradient(145deg, #f9f7f1, #f5f3ed);
+            border-radius: 12px;
+            padding: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .prayer-title {
+            font-size: 0.9rem;
+            color: var(--primary-color);
+            margin-bottom: 6px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        
+        .prayer-title i {
+            margin-right: 6px;
+            color: var(--secondary-color);
+            font-size: 0.8rem;
+        }
+        
+        .prayer-text {
+            font-family: var(--jawi-font);
+            font-size: 1.2rem;
+            color: var(--dark-color);
+            text-align: right;
+            direction: rtl;
+            line-height: 1.6;
+            margin-bottom: 6px;
+            flex-grow: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .prayer-translation {
+            font-size: 0.8rem;
+            color: #6c757d;
+            border-top: 1px solid #e9ecef;
+            padding-top: 6px;
+        }
+        
+        .prayer-icon {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            font-size: 1.2rem;
+            color: var(--secondary-color);
+            opacity: 0.2;
+        }
+        
+        /* Score Summary Styles */
+        .score-summary {
+            margin-top: 10px;
+            height: calc(100% - 60px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .score-card {
+            background: linear-gradient(145deg, #ffffff, #f8f9fa);
+            border-radius: 12px;
+            padding: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s;
+        }
+        
+        .score-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+        }
+        
+        .score-info {
+            flex-grow: 1;
+        }
+        
+        .score-title {
+            font-size: 0.85rem;
+            color: var(--dark-color);
+            margin-bottom: 2px;
+        }
+        
+        .score-value {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+        
+        .score-icon {
+            font-size: 1.5rem;
+            color: var(--secondary-color);
+            margin-left: 10px;
+        }
+        
+        .total-score {
+            background: linear-gradient(135deg, var(--primary-color), #8e44ad);
+            color: white;
+            margin-top: auto;
+        }
+        
+        .total-score .score-title,
+        .total-score .score-value,
+        .total-score .score-icon {
+            color: white;
+        }
+        
+        .achievement {
+            text-align: center;
+            margin-top: 15px;
+        }
+        
+        .achievement-icon {
+            font-size: 2.5rem;
+            color: var(--secondary-color);
+            margin-bottom: 5px;
+            animation: bounce 2s infinite;
+        }
+        
+        .achievement-text {
+            font-size: 1rem;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-10px);}
+            60% {transform: translateY(-5px);}
+        }
+        
+        @keyframes fadeIn {
+            from {opacity: 0;}
+            to {opacity: 1;}
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .jawi-grid-container {
+                grid-template-columns: repeat(4, 1fr);
+            }
+            
+            .options-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .game-board {
+                grid-template-columns: repeat(3, 1fr);
+            }
+            
+            .reading-practice {
+                grid-template-columns: 1fr;
+            }
+            
+            .prayers-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .toc-list {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="book-container">
+        <div class="book">
+            <!-- Page 1: Cover -->
+            <div class="page active" id="page1">
+                <div class="page-content cover">
+                    <div class="cover-image">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                    <h1>Mari Belajar Bahasa Jawi</h1>
+                    <p class="lead">Panduan Interaktif untuk Mempelajari Tulisan Jawi</p>
+                    <div class="navigation">
+                        <button class="nav-btn" onclick="prevPage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="nav-btn" onclick="nextPage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="page-number">1</div>
+                </div>
+            </div>
+            
+            <!-- Page 2: Table of Contents -->
+            <div class="page" id="page2">
+                <div class="page-content toc">
+                    <div class="page-header">
+                        <h2>Isi Kandungan</h2>
+                    </div>
+                    <ul class="toc-list">
+                        <li class="toc-item" onclick="goToPage(1)">
+                            <i class="fas fa-book-open"></i>
+                            <span>Muka Depan</span>
+                        </li>
+                        <li class="toc-item" onclick="goToPage(2)">
+                            <i class="fas fa-list"></i>
+                            <span>Isi Kandungan</span>
+                        </li>
+                        <li class="toc-item" onclick="goToPage(3)">
+                            <i class="fas fa-font"></i>
+                            <span>Belajar Huruf Jawi</span>
+                        </li>
+                        <li class="toc-item" onclick="goToPage(4)">
+                            <i class="fas fa-link"></i>
+                            <span>Cara Menyambung Huruf Jawi</span>
+                        </li>
+                        <li class="toc-item" onclick="goToPage(5)">
+                            <i class="fas fa-book-reader"></i>
+                            <span>Cuba Membaca</span>
+                        </li>
+                        <li class="toc-item" onclick="goToPage(6)">
+                            <i class="fas fa-book"></i>
+                            <span>Cerita: Kura-kura dan Arnab</span>
+                        </li>
+                        <li class="toc-item" onclick="goToPage(7)">
+                            <i class="fas fa-tasks"></i>
+                            <span>Latihan Kenal Huruf</span>
+                        </li>
+                        <li class="toc-item" onclick="goToPage(8)">
+                            <i class="fas fa-pencil-alt"></i>
+                            <span>Latihan Menulis Rumi</span>
+                        </li>
+                        <li class="toc-item" onclick="goToPage(9)">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Latihan Perkataan Jawi</span>
+                        </li>
+                        <li class="toc-item" onclick="goToPage(10)">
+                            <i class="fas fa-gamepad"></i>
+                            <span>Permainan</span>
+                        </li>
+                        <li class="toc-item" onclick="goToPage(11)">
+                            <i class="fas fa-pray"></i>
+                            <span>Doa Harian</span>
+                        </li>
+                        <li class="toc-item" onclick="goToPage(12)">
+                            <i class="fas fa-star"></i>
+                            <span>Jumlah Skor</span>
+                        </li>
+                    </ul>
+                    <div class="navigation">
+                        <button class="nav-btn" onclick="prevPage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="nav-btn" onclick="nextPage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="page-number">2</div>
+                </div>
+            </div>
+            
+            <!-- Page 3: Jawi Letters -->
+            <div class="page" id="page3">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2>Belajar Huruf Jawi</h2>
+                    </div>
+                    <div class="jawi-grid-container">
+                        <div class="jawi-letter" onclick="showLetter('ا', 'Alif')">
+                            <div class="jawi-char">ا</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ب', 'Ba')">
+                            <div class="jawi-char">ب</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ت', 'Ta')">
+                            <div class="jawi-char">ت</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ث', 'Sa')">
+                            <div class="jawi-char">ث</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ج', 'Jim')">
+                            <div class="jawi-char">ج</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ح', 'Ha')">
+                            <div class="jawi-char">ح</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('خ', 'Kho')">
+                            <div class="jawi-char">خ</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('د', 'Dal')">
+                            <div class="jawi-char">د</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ذ', 'Zal')">
+                            <div class="jawi-char">ذ</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ر', 'Ro')">
+                            <div class="jawi-char">ر</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ز', 'Zai')">
+                            <div class="jawi-char">ز</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('س', 'Sin')">
+                            <div class="jawi-char">س</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ش', 'Shin')">
+                            <div class="jawi-char">ش</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ص', 'Shod')">
+                            <div class="jawi-char">ص</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ض', 'Dod')">
+                            <div class="jawi-char">ض</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ط', 'Tho')">
+                            <div class="jawi-char">ط</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ظ', 'Zho')">
+                            <div class="jawi-char">ظ</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ع', 'Ain')">
+                            <div class="jawi-char">ع</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('غ', 'Ghain')">
+                            <div class="jawi-char">غ</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ف', 'Fa')">
+                            <div class="jawi-char">ف</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ق', 'Qaf')">
+                            <div class="jawi-char">ق</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ك', 'Kaf')">
+                            <div class="jawi-char">ك</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ل', 'Lam')">
+                            <div class="jawi-char">ل</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('م', 'Mim')">
+                            <div class="jawi-char">م</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ن', 'Nun')">
+                            <div class="jawi-char">ن</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('و', 'Wau')">
+                            <div class="jawi-char">و</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ه', 'Ha')">
+                            <div class="jawi-char">ه</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('لا', 'Lam Alif')">
+                            <div class="jawi-char">لا</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ء', 'Hamzah')">
+                            <div class="jawi-char">ء</div>
+                        </div>
+                        <div class="jawi-letter" onclick="showLetter('ي', 'Ya')">
+                            <div class="jawi-char">ي</div>
+                        </div>
+                    </div>
+                    <div class="letter-display">
+                        <div class="jawi-char" id="selected-letter"></div>
+                        <div class="rumi-char" id="selected-letter-rumi"></div>
+                    </div>
+                    <div class="navigation">
+                        <button class="nav-btn" onclick="prevPage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="nav-btn" onclick="nextPage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="page-number">3</div>
+                </div>
+            </div>
+            
+            <!-- Page 4: Connecting Letters - COMPLETELY REDESIGNED WITH CLEARER ANIMATIONS -->
+            <div class="page" id="page4">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2>Cara Menyambung Huruf Jawi</h2>
+                    </div>
+                    <div class="connecting-container">
+                        <div class="connection-example">
+                            <div class="connection-title">
+                                <div class="rumi-title">Ayah</div>
+                                <div class="jawi-title">ايه</div>
+                            </div>
+                            <div class="connection-animation">
+                                <div class="letter-stages">
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">ا</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">ا</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ي</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">ا</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ي</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ه</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter" style="font-size: 2.2rem; color: #4e2a84; text-shadow: 0 0 5px rgba(78, 42, 132, 0.3);">ايه</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="connection-info">
+                                Alif (ا) + Ya (ي) + Ha (ه) = Ayah (ايه)
+                            </div>
+                        </div>
+                        
+                        <div class="connection-example">
+                            <div class="connection-title">
+                                <div class="rumi-title">Ibu</div>
+                                <div class="jawi-title">ايبو</div>
+                            </div>
+                            <div class="connection-animation">
+                                <div class="letter-stages">
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">ا</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">ا</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ي</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">ا</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ي</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ب</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">و</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter" style="font-size: 2.2rem; color: #4e2a84; text-shadow: 0 0 5px rgba(78, 42, 132, 0.3);">ايبو</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="connection-info">
+                                Alif (ا) + Ya (ي) + Ba (ب) + Wau (و) = Ibu (ايبو)
+                            </div>
+                        </div>
+                        
+                        <div class="connection-example">
+                            <div class="connection-title">
+                                <div class="rumi-title">Kereta</div>
+                                <div class="jawi-title">كريتا</div>
+                            </div>
+                            <div class="connection-animation">
+                                <div class="letter-stages">
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">ك</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">ك</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ر</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ي</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">ك</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ر</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ي</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ت</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ا</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter" style="font-size: 2.2rem; color: #4e2a84; text-shadow: 0 0 5px rgba(78, 42, 132, 0.3);">كريتا</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="connection-info">
+                                Kaf (ك) + Ra (ر) + Ya (ي) + Ta (ت) + Alif (ا) = Kereta (كريتا)
+                            </div>
+                        </div>
+                        
+                        <div class="connection-example">
+                            <div class="connection-title">
+                                <div class="rumi-title">Sekolah</div>
+                                <div class="jawi-title">سكوله</div>
+                            </div>
+                            <div class="connection-animation">
+                                <div class="letter-stages">
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">س</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">س</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ك</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">و</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">س</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ك</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">و</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ل</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ه</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter" style="font-size: 2.2rem; color: #4e2a84; text-shadow: 0 0 5px rgba(78, 42, 132, 0.3);">سكوله</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="connection-info">
+                                Sin (س) + Kaf (ك) + Wau (و) + Lam (ل) + Ha (ه) = Sekolah (سكوله)
+                            </div>
+                        </div>
+                        
+                        <div class="connection-example">
+                            <div class="connection-title">
+                                <div class="rumi-title">Makan</div>
+                                <div class="jawi-title">ماكن</div>
+                            </div>
+                            <div class="connection-animation">
+                                <div class="letter-stages">
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">م</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">م</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ا</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter">م</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ا</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ك</div>
+                                        <div class="connection-arrow">→</div>
+                                        <div class="stage-letter">ن</div>
+                                    </div>
+                                    <div class="letter-stage">
+                                        <div class="stage-letter" style="font-size: 2.2rem; color: #4e2a84; text-shadow: 0 0 5px rgba(78, 42, 132, 0.3);">ماكن</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="connection-info">
+                                Mim (م) + Alif (ا) + Kaf (ك) + Nun (ن) = Makan (ماكن)
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation">
+                        <button class="nav-btn" onclick="prevPage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="nav-btn" onclick="nextPage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="page-number">4</div>
+                </div>
+            </div>
+            
+            <!-- Page 5: Reading Practice - UPDATED WITH ANIMATIONS -->
+            <div class="page" id="page5">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2>Cuba Membaca</h2>
+                    </div>
+                    <div class="reading-practice">
+                        <div class="sentence-box" onclick="toggleTranslation(this)">
+                            <div class="tap-hint">Klik untuk terjemahan</div>
+                            <div class="jawi-sentence">ساي سوك ماكن</div>
+                            <div class="rumi-translation">Saya suka makan</div>
+                        </div>
+                        <div class="sentence-box" onclick="toggleTranslation(this)">
+                            <div class="tap-hint">Klik untuk terjemahan</div>
+                            <div class="jawi-sentence">علي سدڠ برجالن كاكي</div>
+                            <div class="rumi-translation">Ali sedang berjalan kaki</div>
+                        </div>
+                        <div class="sentence-box" onclick="toggleTranslation(this)">
+                            <div class="tap-hint">Klik untuk terjemahan</div>
+                            <div class="jawi-sentence">ايبو مماسق كاري</div>
+                            <div class="rumi-translation">Ibu memasak kari</div>
+                        </div>
+                        <div class="sentence-box" onclick="toggleTranslation(this)">
+                            <div class="tap-hint">Klik untuk terjemahan</div>
+                            <div class="jawi-sentence">ايه منچوچي كريتا</div>
+                            <div class="rumi-translation">Ayah mencuci kereta</div>
+                        </div>
+                        <div class="sentence-box" onclick="toggleTranslation(this)">
+                            <div class="tap-hint">Klik untuk terjemahan</div>
+                            <div class="jawi-sentence">مريك برمين دلوار</div>
+                            <div class="rumi-translation">Mereka bermain di luar</div>
+                        </div>
+                        <div class="sentence-box" onclick="toggleTranslation(this)">
+                            <div class="tap-hint">Klik untuk terjemahan</div>
+                            <div class="jawi-sentence">كامي فرݢي ك سكوله</div>
+                            <div class="rumi-translation">Kami pergi ke sekolah</div>
+                        </div>
+                    </div>
+                    <div class="navigation">
+                        <button class="nav-btn" onclick="prevPage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="nav-btn" onclick="nextPage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="page-number">5</div>
+                </div>
+            </div>
+            
+            <!-- Page 6: Story -->
+            <div class="page" id="page6">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2>Cerita: Kura-kura dan Arnab</h2>
+                    </div>
+                    <div class="story-images">
+                        <div class="story-image">
+                            <i class="fas fa-turtle"></i>
+                        </div>
+                        <div class="story-image">
+                            <i class="fas fa-rabbit"></i>
+                        </div>
+                    </div>
+                    <div class="story-container">
+                        <div class="story-title">قيصه كورا٢ دان ارنب</div>
+                        <div class="story-content">
+                            <div class="story-paragraph" onclick="toggleStoryTranslation(this)">
+                                <div class="jawi-text">فد سواتو هاري، ارنب دان كورا٢ برتمو دهوتن.</div>
+                                <div class="story-translation">Pada suatu hari, arnab dan kura-kura bertemu di hutan.</div>
+                            </div>
+                            <div class="story-paragraph" onclick="toggleStoryTranslation(this)">
+                                <div class="jawi-text">ارنب مڠيجيق كورا٢ كران برجالن لمبت.</div>
+                                <div class="story-translation">Arnab mengejek kura-kura kerana berjalan lambat.</div>
+                            </div>
+                            <div class="story-paragraph" onclick="toggleStoryTranslation(this)">
+                                <div class="jawi-text">كورا٢ منچابر ارنب اونتوق برلومبا.</div>
+                                <div class="story-translation">Kura-kura mencabar arnab untuk berlumba.</div>
+                            </div>
+                            <div class="story-paragraph" onclick="toggleStoryTranslation(this)">
+                                <div class="jawi-text">ارنب سڠت ياقين دافت مڠالهكن كورا٢.</div>
+                                <div class="story-translation">Arnab sangat yakin dapat mengalahkan kura-kura.</div>
+                            </div>
+                            <div class="story-paragraph" onclick="toggleStoryTranslation(this)">
+                                <div class="jawi-text">سماس برلومبا، ارنب برلاري دڠن فنتس.</div>
+                                <div class="story-translation">Semasa berlumba, arnab berlari dengan pantas.</div>
+                            </div>
+                            <div class="story-paragraph" onclick="toggleStoryTranslation(this)">
+                                <div class="jawi-text">ارنب برهنتي دان تيدور دباوه فوكوق.</div>
+                                <div class="story-translation">Arnab berhenti dan tidur di bawah pokok.</div>
+                            </div>
+                            <div class="story-paragraph" onclick="toggleStoryTranslation(this)">
+                                <div class="jawi-text">كورا٢ تروس برجالن تنفا برهنتي.</div>
+                                <div class="story-translation">Kura-kura terus berjalan tanpa berhenti.</div>
+                            </div>
+                            <div class="story-paragraph" onclick="toggleStoryTranslation(this)">
+                                <div class="jawi-text">افابيلا ارنب ترسدر، كورا٢ سوده سامفاي كڬاريسن فناهت.</div>
+                                <div class="story-translation">Apabila arnab tersedar, kura-kura sudah sampai ke garisan penamat.</div>
+                            </div>
+                            <div class="story-paragraph" onclick="toggleStoryTranslation(this)">
+                                <div class="jawi-text">كورا٢ مننڠ فرلومباءن ايت.</div>
+                                <div class="story-translation">Kura-kura menang perlumbaan itu.</div>
+                            </div>
+                            <div class="story-paragraph" onclick="toggleStoryTranslation(this)">
+                                <div class="jawi-text">فڠاجرن: كتكونن دان كسبرن اكن ممباوا كجاياءن.</div>
+                                <div class="story-translation">Pengajaran: Ketekuanan dan kesabaran akan membawa kejayaan.</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation">
+                        <button class="nav-btn" onclick="prevPage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="nav-btn" onclick="nextPage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="page-number">6</div>
+                </div>
+            </div>
+            
+            <!-- Page 7: Letter Recognition Quiz -->
+            <div class="page" id="page7">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2>Latihan Kenal Huruf</h2>
+                    </div>
+                    <div class="quiz-container" id="letter-quiz">
+                        <!-- Quiz questions will be generated by JavaScript -->
+                    </div>
+                    <div class="quiz-progress">
+                        <div class="quiz-score">Skor: <span id="letter-quiz-score">0</span>/15</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="letter-quiz-progress"></div>
+                        </div>
+                        <div class="question-counter">Soalan: <span id="letter-quiz-question">1</span>/15</div>
+                    </div>
+                    <div class="navigation">
+                        <button class="nav-btn" onclick="prevPage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="nav-btn" onclick="nextPage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="page-number">7</div>
+                </div>
+            </div>
+            
+            <!-- Page 8: Writing Exercise -->
+            <div class="page" id="page8">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2>Latihan Menulis Rumi</h2>
+                    </div>
+                    <div class="writing-exercise" id="writing-exercise">
+                        <!-- Writing exercises will be generated by JavaScript -->
+                    </div>
+                    <div class="quiz-progress">
+                        <div class="quiz-score">Skor: <span id="writing-exercise-score">0</span>/5</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="writing-exercise-progress"></div>
+                        </div>
+                        <div class="question-counter">Soalan: <span id="writing-exercise-question">1</span>/5</div>
+                    </div>
+                    <div class="navigation">
+                        <button class="nav-btn" onclick="prevPage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="nav-btn" onclick="nextPage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="page-number">8</div>
+                </div>
+            </div>
+            
+            <!-- Page 9: Word Quiz -->
+            <div class="page" id="page9">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2>Latihan Perkataan Jawi</h2>
+                    </div>
+                    <div class="quiz-container" id="word-quiz">
+                        <!-- Word quiz questions will be generated by JavaScript -->
+                    </div>
+                    <div class="quiz-progress">
+                        <div class="quiz-score">Skor: <span id="word-quiz-score">0</span>/15</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="word-quiz-progress"></div>
+                        </div>
+                        <div class="question-counter">Soalan: <span id="word-quiz-question">1</span>/15</div>
+                    </div>
+                    <div class="navigation">
+                        <button class="nav-btn" onclick="prevPage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="nav-btn" onclick="nextPage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="page-number">9</div>
+                </div>
+            </div>
+            
+            <!-- Page 10: Game -->
+            <div class="page" id="page10">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2>Permainan Padankan Jawi</h2>
+                    </div>
+                    <div class="game-container">
+                        <p>Padankan huruf Jawi dengan pasangannya. Klik pada kad untuk membukanya.</p>
+                        <div class="game-board" id="memory-game">
+                            <!-- Memory game cards will be generated by JavaScript -->
+                        </div>
+                        <div class="game-stats">
+                            <div class="game-stat">
+                                <div class="stat-label">Percubaan</div>
+                                <div class="stat-value" id="game-attempts">0</div>
+                            </div>
+                            <div class="game-stat">
+                                <div class="stat-label">Padanan</div>
+                                <div class="stat-value" id="game-matches">0</div>
+                            </div>
+                            <div class="game-stat">
+                                <div class="stat-label">Skor</div>
+                                <div class="stat-value" id="game-score">0</div>
+                            </div>
+                        </div>
+                        <button class="check-answer-btn" id="restart-game" style="margin-top: 10px;">Mula Semula</button>
+                    </div>
+                    <div class="navigation">
+                        <button class="nav-btn" onclick="prevPage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="nav-btn" onclick="nextPage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="page-number">10</div>
+                </div>
+            </div>
+            
+            <!-- Page 11: Daily Prayers -->
+            <div class="page" id="page11">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2>Doa Harian</h2>
+                    </div>
+                    <div class="prayers-container">
+                        <div class="prayer">
+                            <div class="prayer-title">
+                                <i class="fas fa-sun"></i>
+                                Doa Bangun Tidur
+                            </div>
+                            <div class="prayer-text">
+                                الْحَمْدُ لِلَّهِ الَّذِي أَحْيَانَا بَعْدَ مَا أَمَاتَنَا وَإِلَيْهِ النُّشُورُ
+                            </div>
+                            <div class="prayer-translation">
+                                "Segala puji bagi Allah yang menghidupkan kami setelah mematikan kami dan kepada-Nya kami dibangkitkan."
+                            </div>
+                        </div>
+                        <div class="prayer">
+                            <div class="prayer-title">
+                                <i class="fas fa-door-open"></i>
+                                Doa Keluar Rumah
+                            </div>
+                            <div class="prayer-text">
+                                بِسْمِ اللَّهِ تَوَكَّلْتُ عَلَى اللَّهِ، وَلَا حَوْلَ وَلَا قُوَّةَ إِلَّا بِاللَّهِ
+                            </div>
+                            <div class="prayer-translation">
+                                "Dengan nama Allah, aku bertawakal kepada Allah, tiada daya dan kekuatan melainkan dengan Allah."
+                            </div>
+                        </div>
+                        <div class="prayer">
+                            <div class="prayer-title">
+                                <i class="fas fa-utensils"></i>
+                                Doa Makan
+                            </div>
+                            <div class="prayer-text">
+                                بِسْمِ اللَّهِ وَعَلَى بَرَكَةِ اللَّهِ
+                            </div>
+                            <div class="prayer-translation">
+                                "Dengan nama Allah dan atas berkat Allah."
+                            </div>
+                        </div>
+                        <div class="prayer">
+                            <div class="prayer-title">
+                                <i class="fas fa-moon"></i>
+                                Doa Sebelum Tidur
+                            </div>
+                            <div class="prayer-text">
+                                بِاسْمِكَ اللَّهُمَّ أَمُوتُ وَأَحْيَا
+                            </div>
+                            <div class="prayer-translation">
+                                "Dengan nama-Mu ya Allah, aku mati dan aku hidup."
+                            </div>
+                        </div>
+                    </div>
+                    <div class="navigation">
+                        <button class="nav-btn" onclick="prevPage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="nav-btn" onclick="nextPage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="page-number">11</div>
+                </div>
+            </div>
+            
+            <!-- Page 12: Score Summary -->
+            <div class="page" id="page12">
+                <div class="page-content">
+                    <div class="page-header">
+                        <h2>Jumlah Skor</h2>
+                    </div>
+                    <div class="score-summary">
+                        <div class="score-card">
+                            <div class="score-info">
+                                <div class="score-title">Latihan Kenal Huruf</div>
+                                <div class="score-value" id="summary-letter-quiz">0/15</div>
+                            </div>
+                            <div class="score-icon">
+                                <i class="fas fa-font"></i>
+                            </div>
+                        </div>
+                        <div class="score-card">
+                            <div class="score-info">
+                                <div class="score-title">Latihan Menulis Rumi</div>
+                                <div class="score-value" id="summary-writing-exercise">0/5</div>
+                            </div>
+                            <div class="score-icon">
+                                <i class="fas fa-pencil-alt"></i>
+                            </div>
+                        </div>
+                        <div class="score-card">
+                            <div class="score-info">
+                                <div class="score-title">Latihan Perkataan Jawi</div>
+                                <div class="score-value" id="summary-word-quiz">0/15</div>
+                            </div>
+                            <div class="score-icon">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                        </div>
+                        <div class="score-card">
+                            <div class="score-info">
+                                <div class="score-title">Permainan Padankan Jawi</div>
+                                <div class="score-value" id="summary-game-score">0</div>
+                            </div>
+                            <div class="score-icon">
+                                <i class="fas fa-gamepad"></i>
+                            </div>
+                        </div>
+                        <div class="score-card total-score">
+                            <div class="score-info">
+                                <div class="score-title">Jumlah Skor</div>
+                                <div class="score-value" id="summary-total-score">0/35+</div>
+                            </div>
+                            <div class="score-icon">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                        </div>
+                        <div class="achievement">
+                            <div class="achievement-icon">
+                                <i class="fas fa-medal"></i>
+                            </div>
+                            <div class="achievement-text" id="achievement-text">Tahniah! Teruskan belajar!</div>
+                        </div>
+                    </div>
+                    <div class="navigation">
+                        <button class="nav-btn" onclick="prevPage()">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <button class="nav-btn" onclick="nextPage()">
+                            <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    <div class="page-number">12</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Global variables
+        let currentPage = 1;
+        const totalPages = 12;
+        let scores = {
+            letterQuiz: 0,
+            writingExercise: 0,
+            wordQuiz: 0,
+            game: 0
+        };
+        
+        // Initialize the book
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set up letter quiz
+            setupLetterQuiz();
+            
+            // Set up writing exercise
+            setupWritingExercise();
+            
+            // Set up word quiz
+            setupWordQuiz();
+            
+            // Set up memory game
+            setupMemoryGame();
+            
+            // Update summary page
+            updateScoreSummary();
+        });
+        
+        // Navigation functions
+        function goToPage(pageNumber) {
+            if (pageNumber < 1 || pageNumber > totalPages) return;
+            
+            document.getElementById(`page${currentPage}`).classList.remove('active');
+            currentPage = pageNumber;
+            document.getElementById(`page${currentPage}`).classList.add('active');
+        }
+        
+        function nextPage() {
+            goToPage(currentPage + 1 > totalPages ? 1 : currentPage + 1);
+        }
+        
+        function prevPage() {
+            goToPage(currentPage - 1 < 1 ? totalPages : currentPage - 1);
+        }
+        
+        // Jawi Letters Page Functions
+        function showLetter(letter, name) {
+            const selectedLetter = document.getElementById('selected-letter');
+            const selectedLetterRumi = document.getElementById('selected-letter-rumi');
+            selectedLetter.textContent = letter;
+            selectedLetterRumi.textContent = name;
+            
+            // Remove active class from all letters
+            const letters = document.querySelectorAll('.jawi-letter');
+            letters.forEach(l => l.classList.remove('active'));
+            
+            // Add active class to clicked letter
+            event.currentTarget.classList.add('active');
+        }
+        
+        // Reading Practice Functions - UPDATED
+        function toggleTranslation(box) {
+            box.classList.toggle('active');
+        }
+        
+        // Story Page Functions
+        function toggleStoryTranslation(paragraph) {
+            paragraph.classList.toggle('active');
+        }
+        
+        // Letter Quiz Functions
+        function setupLetterQuiz() {
+            const quizContainer = document.getElementById('letter-quiz');
+            const jawiLetters = [
+                { letter: 'ا', name: 'Alif' },
+                { letter: 'ب', name: 'Ba' },
+                { letter: 'ت', name: 'Ta' },
+                { letter: 'ث', name: 'Sa' },
+                { letter: 'ج', name: 'Jim' },
+                { letter: 'ح', name: 'Ha' },
+                { letter: 'خ', name: 'Kho' },
+                { letter: 'د', name: 'Dal' },
+                { letter: 'ذ', name: 'Zal' },
+                { letter: 'ر', name: 'Ro' },
+                { letter: 'ز', name: 'Zai' },
+                { letter: 'س', name: 'Sin' },
+                { letter: 'ش', name: 'Shin' },
+                { letter: 'ص', name: 'Shod' },
+                { letter: 'ض', name: 'Dod' },
+                { letter: 'ط', name: 'Tho' },
+                { letter: 'ظ', name: 'Zho' },
+                { letter: 'ع', name: 'Ain' },
+                { letter: 'غ', name: 'Ghain' },
+                { letter: 'ف', name: 'Fa' },
+                { letter: 'ق', name: 'Qaf' },
+                { letter: 'ك', name: 'Kaf' },
+                { letter: 'ل', name: 'Lam' },
+                { letter: 'م', name: 'Mim' },
+                { letter: 'ن', name: 'Nun' },
+                { letter: 'و', name: 'Wau' },
+                { letter: 'ه', name: 'Ha' },
+                { letter: 'لا', name: 'Lam Alif' },
+                { letter: 'ء', name: 'Hamzah' },
+                { letter: 'ي', name: 'Ya' }
+            ];
+            
+            // Shuffle and take 15 letters
+            const shuffledLetters = [...jawiLetters].sort(() => 0.5 - Math.random()).slice(0, 15);
+            let currentQuestionIndex = 0;
+            let score = 0;
+            
+            function showQuestion(index) {
+                quizContainer.innerHTML = '';
+                
+                if (index >= shuffledLetters.length) {
+                    // Quiz completed
+                    quizContainer.innerHTML = `
+                        <div class="quiz-question active">
+                            <h3 style="text-align: center; margin-bottom: 20px; color: var(--primary-color);">Tahniah! Anda telah selesai!</h3>
+                            <div style="text-align: center; font-size: 2rem; margin-bottom: 20px;">
+                                <i class="fas fa-trophy" style="color: var(--secondary-color); font-size: 4rem; margin-bottom: 15px; animation: bounce 2s infinite;"></i>
+                                <p>Skor anda: <strong>${score}/${shuffledLetters.length}</strong></p>
+                            </div>
+                            <button class="check-answer-btn" onclick="setupLetterQuiz()">Cuba Lagi</button>
+                        </div>
+                    `;
+                    scores.letterQuiz = score;
+                    updateScoreSummary();
+                    return;
+                }
+                
+                const currentLetter = shuffledLetters[index];
+                
+                // Create options (1 correct, 3 random incorrect)
+                let options = [currentLetter.name];
+                
+                while (options.length < 4) {
+                    const randomLetter = jawiLetters[Math.floor(Math.random() * jawiLetters.length)].name;
+                    if (!options.includes(randomLetter)) {
+                        options.push(randomLetter);
+                    }
+                }
+                
+                // Shuffle options
+                options = options.sort(() => 0.5 - Math.random());
+                
+                const questionElement = document.createElement('div');
+                questionElement.className = 'quiz-question active';
+                questionElement.innerHTML = `
+                    <div class="question-text">${currentLetter.letter}</div>
+                    <div class="options-container">
+                        ${options.map((option, i) => `
+                            <div class="option" onclick="checkAnswer(this, '${currentLetter.name}', ${index})">
+                                ${option}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                quizContainer.appendChild(questionElement);
+                
+                // Update progress
+                document.getElementById('letter-quiz-question').textContent = index + 1;
+                document.getElementById('letter-quiz-progress').style.width = `${((index + 1) / shuffledLetters.length) * 100}%`;
+            }
+            
+            // Show first question
+            showQuestion(currentQuestionIndex);
+            
+            // Global function to check answer
+            window.checkAnswer = function(element, correctAnswer, questionIndex) {
+                const selectedAnswer = element.textContent.trim();
+                const options = document.querySelectorAll('.option');
+                
+                options.forEach(option => {
+                    option.style.pointerEvents = 'none';
+                    
+                    if (option.textContent.trim() === correctAnswer) {
+                        option.classList.add('correct');
+                    }
+                });
+                
+                if (selectedAnswer === correctAnswer) {
+                    element.classList.add('correct');
+                    score++;
+                    document.getElementById('letter-quiz-score').textContent = score;
+                } else {
+                    element.classList.add('incorrect');
+                }
+                
+                // Move to next question after delay
+                setTimeout(() => {
+                    currentQuestionIndex++;
+                    showQuestion(currentQuestionIndex);
+                }, 1500);
+            };
+        }
+        
+        // Writing Exercise Functions
+        function setupWritingExercise() {
+            const exerciseContainer = document.getElementById('writing-exercise');
+            const exercises = [
+                { jawi: 'بلاجر', rumi: 'belajar' },
+                { jawi: 'كريتا', rumi: 'kereta' },
+                { jawi: 'رومه', rumi: 'rumah' },
+                { jawi: 'سكوله', rumi: 'sekolah' },
+                { jawi: 'بوكو', rumi: 'buku' }
+            ];
+            
+            let currentExerciseIndex = 0;
+            let score = 0;
+            
+            function showExercise(index) {
+                exerciseContainer.innerHTML = '';
+                
+                if (index >= exercises.length) {
+                    // Exercise completed
+                    exerciseContainer.innerHTML = `
+                        <div class="writing-question">
+                            <h3 style="text-align: center; margin-bottom: 20px; color: var(--primary-color);">Tahniah! Anda telah selesai!</h3>
+                            <div style="text-align: center; font-size: 2rem; margin-bottom: 20px;">
+                                <i class="fas fa-trophy" style="color: var(--secondary-color); font-size: 4rem; margin-bottom: 15px; animation: bounce 2s infinite;"></i>
+                                <p>Skor anda: <strong>${score}/${exercises.length}</strong></p>
+                            </div>
+                            <button class="check-answer-btn" onclick="setupWritingExercise()">Cuba Lagi</button>
+                        </div>
+                    `;
+                    scores.writingExercise = score;
+                    updateScoreSummary();
+                    return;
+                }
+                
+                const currentExercise = exercises[index];
+                
+                const exerciseElement = document.createElement('div');
+                exerciseElement.className = 'writing-question';
+                exerciseElement.innerHTML = `
+                    <div class="jawi-prompt">${currentExercise.jawi}</div>
+                    <input type="text" class="writing-input" placeholder="Tulis perkataan dalam Rumi..." autocomplete="off">
+                    <button class="check-answer-btn" onclick="checkWritingAnswer('${currentExercise.rumi}', ${index})">Semak Jawapan</button>
+                    <div class="feedback"></div>
+                `;
+                
+                exerciseContainer.appendChild(exerciseElement);
+                
+                // Update progress
+                document.getElementById('writing-exercise-question').textContent = index + 1;
+                document.getElementById('writing-exercise-progress').style.width = `${((index + 1) / exercises.length) * 100}%`;
+            }
+            
+            // Show first exercise
+            showExercise(currentExerciseIndex);
+            
+            // Global function to check writing answer
+            window.checkWritingAnswer = function(correctAnswer, exerciseIndex) {
+                const inputElement = document.querySelector('.writing-input');
+                const userAnswer = inputElement.value.trim().toLowerCase();
+                const feedbackElement = document.querySelector('.feedback');
+                
+                feedbackElement.style.display = 'block';
+                
+                if (userAnswer === correctAnswer) {
+                    feedbackElement.textContent = 'Betul! Tahniah!';
+                    feedbackElement.className = 'feedback correct';
+                    score++;
+                    document.getElementById('writing-exercise-score').textContent = score;
+                } else {
+                    feedbackElement.textContent = `Salah. Jawapan yang betul ialah: ${correctAnswer}`;
+                    feedbackElement.className = 'feedback incorrect';
+                }
+                
+                // Disable input and button
+                inputElement.disabled = true;
+                document.querySelector('.check-answer-btn').disabled = true;
+                
+                // Move to next exercise after delay
+                setTimeout(() => {
+                    currentExerciseIndex++;
+                    showExercise(currentExerciseIndex);
+                }, 2000);
+            };
+        }
+        
+        // Word Quiz Functions
+        function setupWordQuiz() {
+            const quizContainer = document.getElementById('word-quiz');
+            const wordQuestions = [
+                {
+                    word: 'ايبو',
+                    options: ['Ibu', 'Ayah', 'Adik', 'Kakak'],
+                    correct: 'Ibu'
+                },
+                {
+                    word: 'ايه',
+                    options: ['Ibu', 'Ayah', 'Adik', 'Kakak'],
+                    correct: 'Ayah'
+                },
+                {
+                    word: 'سكوله',
+                    options: ['Rumah', 'Sekolah', 'Kereta', 'Buku'],
+                    correct: 'Sekolah'
+                },
+                {
+                    word: 'كريتا',
+                    options: ['Rumah', 'Sekolah', 'Kereta', 'Buku'],
+                    correct: 'Kereta'
+                },
+                {
+                    word: 'رومه',
+                    options: ['Rumah', 'Sekolah', 'Kereta', 'Buku'],
+                    correct: 'Rumah'
+                },
+                {
+                    word: 'بوكو',
+                    options: ['Rumah', 'Sekolah', 'Kereta', 'Buku'],
+                    correct: 'Buku'
+                },
+                {
+                    word: 'ماكن',
+                    options: ['Makan', 'Minum', 'Tidur', 'Berjalan'],
+                    correct: 'Makan'
+                },
+                {
+                    word: 'مينوم',
+                    options: ['Makan', 'Minum', 'Tidur', 'Berjalan'],
+                    correct: 'Minum'
+                },
+                {
+                    word: 'تيدور',
+                    options: ['Makan', 'Minum', 'Tidur', 'Berjalan'],
+                    correct: 'Tidur'
+                },
+                {
+                    word: 'برجالن',
+                    options: ['Makan', 'Minum', 'Tidur', 'Berjalan'],
+                    correct: 'Berjalan'
+                },
+                {
+                    word: 'بلاجر',
+                    options: ['Belajar', 'Bermain', 'Berenang', 'Berlari'],
+                    correct: 'Belajar'
+                },
+                {
+                    word: 'برمين',
+                    options: ['Belajar', 'Bermain', 'Berenang', 'Berlari'],
+                    correct: 'Bermain'
+                },
+                {
+                    word: 'برنڠ',
+                    options: ['Belajar', 'Bermain', 'Berenang', 'Berlari'],
+                    correct: 'Berenang'
+                },
+                {
+                    word: 'برلاري',
+                    options: ['Belajar', 'Bermain', 'Berenang', 'Berlari'],
+                    correct: 'Berlari'
+                },
+                {
+                    word: 'چوچي',
+                    options: ['Cuci', 'Masak', 'Baca', 'Tulis'],
+                    correct: 'Cuci'
+                }
+            ];
+            
+            // Shuffle questions
+            const shuffledQuestions = [...wordQuestions].sort(() => 0.5 - Math.random());
+            let currentQuestionIndex = 0;
+            let score = 0;
+            
+            function showQuestion(index) {
+                quizContainer.innerHTML = '';
+                
+                if (index >= shuffledQuestions.length) {
+                    // Quiz completed
+                    quizContainer.innerHTML = `
+                        <div class="quiz-question active">
+                            <h3 style="text-align: center; margin-bottom: 20px; color: var(--primary-color);">Tahniah! Anda telah selesai!</h3>
+                            <div style="text-align: center; font-size: 2rem; margin-bottom: 20px;">
+                                <i class="fas fa-trophy" style="color: var(--secondary-color); font-size: 4rem; margin-bottom: 15px; animation: bounce 2s infinite;"></i>
+                                <p>Skor anda: <strong>${score}/${shuffledQuestions.length}</strong></p>
+                            </div>
+                            <button class="check-answer-btn" onclick="setupWordQuiz()">Cuba Lagi</button>
+                        </div>
+                    `;
+                    scores.wordQuiz = score;
+                    updateScoreSummary();
+                    return;
+                }
+                
+                const currentQuestion = shuffledQuestions[index];
+                
+                const questionElement = document.createElement('div');
+                questionElement.className = 'quiz-question active';
+                questionElement.innerHTML = `
+                    <div class="question-text">${currentQuestion.word}</div>
+                    <div class="options-container">
+                        ${currentQuestion.options.map((option, i) => `
+                            <div class="option" onclick="checkWordAnswer(this, '${currentQuestion.correct}', ${index})">
+                                ${option}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                quizContainer.appendChild(questionElement);
+                
+                // Update progress
+                document.getElementById('word-quiz-question').textContent = index + 1;
+                document.getElementById('word-quiz-progress').style.width = `${((index + 1) / shuffledQuestions.length) * 100}%`;
+            }
+            
+            // Show first question
+            showQuestion(currentQuestionIndex);
+            
+            // Global function to check word answer
+            window.checkWordAnswer = function(element, correctAnswer, questionIndex) {
+                const selectedAnswer = element.textContent.trim();
+                const options = document.querySelectorAll('.option');
+                
+                options.forEach(option => {
+                    option.style.pointerEvents = 'none';
+                    
+                    if (option.textContent.trim() === correctAnswer) {
+                        option.classList.add('correct');
+                    }
+                });
+                
+                if (selectedAnswer === correctAnswer) {
+                    element.classList.add('correct');
+                    score++;
+                    document.getElementById('word-quiz-score').textContent = score;
+                } else {
+                    element.classList.add('incorrect');
+                }
+                
+                // Move to next question after delay
+                setTimeout(() => {
+                    currentQuestionIndex++;
+                    showQuestion(currentQuestionIndex);
+                }, 1500);
+            };
+        }
+        
+        // Memory Game Functions
+        function setupMemoryGame() {
+            const gameBoard = document.getElementById('memory-game');
+            const gameCards = [
+                { id: 1, jawi: 'ا', rumi: 'Alif' },
+                { id: 2, jawi: 'ب', rumi: 'Ba' },
+                { id: 3, jawi: 'ت', rumi: 'Ta' },
+                { id: 4, jawi: 'ج', rumi: 'Jim' },
+                { id: 5, jawi: 'د', rumi: 'Dal' },
+                { id: 6, jawi: 'ر', rumi: 'Ro' },
+                { id: 7, jawi: 'س', rumi: 'Sin' },
+                { id: 8, jawi: 'م', rumi: 'Mim' }
+            ];
+            
+            // Create pairs (jawi and rumi)
+            let cards = [];
+            gameCards.forEach(card => {
+                cards.push({
+                    id: card.id,
+                    type: 'jawi',
+                    content: card.jawi,
+                    matchId: card.id
+                });
+                cards.push({
+                    id: card.id + 100,
+                    type: 'rumi',
+                    content: card.rumi,
+                    matchId: card.id
+                });
+            });
+            
+            // Shuffle cards
+            cards = cards.sort(() => 0.5 - Math.random());
+            
+            // Game state
+            let flippedCards = [];
+            let matchedPairs = 0;
+            let attempts = 0;
+            let gameScore = 0;
+            
+            // Create game board
+            gameBoard.innerHTML = '';
+            cards.forEach(card => {
+                const cardElement = document.createElement('div');
+                cardElement.className = 'game-card';
+                cardElement.dataset.id = card.id;
+                cardElement.dataset.matchId = card.matchId;
+                
+                cardElement.innerHTML = `
+                    <div class="card-front">
+                        <i class="fas fa-question"></i>
+                    </div>
+                    <div class="card-back">
+                        ${card.content}
+                    </div>
+                `;
+                
+                cardElement.addEventListener('click', () => flipCard(cardElement, card));
+                gameBoard.appendChild(cardElement);
+            });
+            
+            // Update game stats
+            document.getElementById('game-attempts').textContent = attempts;
+            document.getElementById('game-matches').textContent = matchedPairs;
+            document.getElementById('game-score').textContent = gameScore;
+            
+            // Flip card function
+            function flipCard(element, card) {
+                // Prevent flipping if already flipped or matched
+                if (element.classList.contains('flipped') || flippedCards.length >= 2) return;
+                
+                // Flip the card
+                element.classList.add('flipped');
+                flippedCards.push({ element, card });
+                
+                // Check for match if two cards are flipped
+                if (flippedCards.length === 2) {
+                    attempts++;
+                    document.getElementById('game-attempts').textContent = attempts;
+                    
+                    const card1 = flippedCards[0];
+                    const card2 = flippedCards[1];
+                    
+                    if (card1.card.matchId === card2.card.matchId) {
+                        // Match found
+                        matchedPairs++;
+                        document.getElementById('game-matches').textContent = matchedPairs;
+                        
+                        // Calculate score (more points for fewer attempts)
+                        gameScore += 10;
+                        document.getElementById('game-score').textContent = gameScore;
+                        scores.game = gameScore;
+                        updateScoreSummary();
+                        
+                        // Clear flipped cards
+                        flippedCards = [];
+                        
+                        // Check if game completed
+                        if (matchedPairs === gameCards.length) {
+                            setTimeout(() => {
+                                alert('Tahniah! Anda telah menyelesaikan permainan!');
+                            }, 500);
+                        }
+                    } else {
+                        // No match
+                        setTimeout(() => {
+                            card1.element.classList.remove('flipped');
+                            card2.element.classList.remove('flipped');
+                            flippedCards = [];
+                        }, 1000);
+                    }
+                }
+            }
+            
+            // Restart game
+            document.getElementById('restart-game').addEventListener('click', setupMemoryGame);
+        }
+        
+        // Update Score Summary
+        function updateScoreSummary() {
+            document.getElementById('summary-letter-quiz').textContent = `${scores.letterQuiz}/15`;
+            document.getElementById('summary-writing-exercise').textContent = `${scores.writingExercise}/5`;
+            document.getElementById('summary-word-quiz').textContent = `${scores.wordQuiz}/15`;
+            document.getElementById('summary-game-score').textContent = scores.game;
+            
+            const totalScore = scores.letterQuiz + scores.writingExercise + scores.wordQuiz + scores.game;
+            document.getElementById('summary-total-score').textContent = `${totalScore}/35+`;
+            
+            // Set achievement text based on score
+            const achievementText = document.getElementById('achievement-text');
+            if (totalScore >= 30) {
+                achievementText.textContent = 'Cemerlang! Anda seorang pakar Jawi!';
+            } else if (totalScore >= 20) {
+                achievementText.textContent = 'Tahniah! Anda telah menguasai asas Jawi!';
+            } else if (totalScore >= 10) {
+                achievementText.textContent = 'Bagus! Teruskan usaha anda!';
+            } else {
+                achievementText.textContent = 'Teruskan belajar! Anda pasti boleh!';
+            }
+        }
+    </script>
+</body>
+</html>
+
